@@ -11,16 +11,19 @@ posInit = f.fkine(qInit);
 posInit = posInit(1:3,4);         %Extract the co-ordinates of the starting position of end-effector
 posError = posGoal - posInit;     %Compute the initial error between the start and end postions of the end-effector
 errLimit = 0.001;                 %Define a small arbitrary error limit
-stepSize = 0.05;                  %Define a step size
+alpha = 0.05;                  %Define a step size
 
-while norm(posError)>errLimit
+while norm(posError)>errLimit    %OR for i=1:1000
     posCurr = f.fkine(qCurr);     %Extract ith position in ith iteration
     posCurr = posCurr(1:3,4);     %Extract the initial co-ordinates
     posError = posGoal-posCurr;   %Extract position error in the ith iteration
+    
+    norm(posError)               %Print the error to track
+    
     jacob = jacob0(f,qCurr);
     jacob = jacob(1:3,1:9);       %Exlude the angular velocity components
     qDelta = pinv(jacob)*posError;
-    qCurr = qCurr + (stepSize*qDelta)'; %Calculate the angles in the ith iteration
+    qCurr = qCurr + (alpha*qDelta)'; %Calculate the angles in the ith iteration
 end
    q=qCurr;
 end

@@ -6,7 +6,9 @@
 function q = Q1(f,position)
     % Pose for the final goal position
     htrans = transl(position);
+    % Seed initial orientation of 0
+    seed = [ 0 0 0 0 0 0 0 0 0 ];
     % Mask Vector ignoring the orientation
-    m = [ 1 1 1 1 1 1 0 0 0 ];
-    q =  f.ikine(htrans,m);
+    m = [ 1 1 1 0 0 0 ];
+    q =  f.ikine(htrans, seed, m);
 end
