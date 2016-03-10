@@ -22,14 +22,10 @@ errLimit=0.01;                 %Define a small arbitrary error limit
 stepSize=0.5;                  %Define a step size
 runLimit=50;
 qRanErrDist=1;
-sphereRadius=sphereRadius+1;
 
-
-%posErrRandfromGoal=posErrFromGoal+qRanErrDist;
 for counter=1:1:runLimit
-
+    
         posErrRandfromGoal=posErrFromGoal+qRanErrDist;
-        disp('Prev Node: ');disp(qCurr); %Debug Only, remove
         while norm(posErrFromGoal)<norm(posErrRandfromGoal)
 
             %Generate a random arm configuration
@@ -37,15 +33,11 @@ for counter=1:1:runLimit
 
             %Check if the new random configuration collides with the obstacle
             [collision] = checkCollision(rob,qCurr,qRand,sphereCenter,sphereRadius,posGoal);
-            disp('Collision? ');disp(collision.colsn);   
             posErrRandfromGoal=collision.EFPos-posGoal;
 
             %If there is no collision of the new configuration and the new
             %position is closer to the goal than the existing position
             if (collision.colsn==0) && (norm(posErrRandfromGoal) < norm(posErrFromGoal))
-                disp('qRand:');disp(qRand);                         %Debug Only, remove
-                disp('Dist Init:');disp(norm(posErrFromGoal));      %Debug Only, remove
-                disp('Dist Rand:');disp(norm(posErrRandfromGoal));  %Debug Only, remove
                 qCurr=qRand;
                 posErrFromGoal=posErrRandfromGoal;
                 qNewNode=qRand;
@@ -54,9 +46,7 @@ for counter=1:1:runLimit
         end
         qMilestones(counter,:)=qNewNode;
         
-        disp('Milestone: ');disp(counter); %Debug Only, remove
-        disp('-------------------------------');%Debug Only, remove
-        
+        %Check if EF of the last milestone is close enough to the 
         if norm(posErrFromGoal)<errLimit
             break
         end
@@ -86,23 +76,20 @@ posCurrL1=rob.fkine(qCurrL1);posCurrL1=posCurrL1(1:3,4);
 
 
     %Check every point 0.1 units apart along the robot arm or the path
-    for pointIncrement=0:0.1:1
+    for pointIncrement=0:0.05:0.5
         pointCollides=checkCollisionAtPoint(posRandEF,posRandL2,posRandL1,...
                               posCurrEF,posCurrL2,posCurrL1,...
                               sphereCenter,sphereRadius,pointIncrement);
         if pointCollides==1
             colStruct.colsn=1;
             colStruct.EFPos=posRandEF;
-            break; 
+            break;
         else
             colStruct.colsn=0;
         end
-        
     end
     
     colStruct.EFPos=posRandEF;
-    %colStruct.colsn=0;
-
 end
 
 function pointCollides= checkCollisionAtPoint(posRandEF,posRandL2,posRandL1,...
@@ -119,8 +106,6 @@ posPointEFC2R= moveStep(posCurrEF,posRandEF,step);
 %If any of the points on the path or the arm itself are inside the
 %sphere (at <= radius distance to the centre of sphere
 if ((norm(posRandEF - sphereCenter)<= sphereRadius) || ...
-   (norm(posRandL2 - sphereCenter)<= sphereRadius) || ...
-   (norm(posRandL1 - sphereCenter)<= sphereRadius) || ...
    (norm(posPointRandL1toL2 - sphereCenter)<= sphereRadius) || ...
    (norm(posPointRandL2toEF - sphereCenter)<= sphereRadius) || ...
    (norm(posPointL2C2R - sphereCenter)<= sphereRadius) || ...
