@@ -20,119 +20,145 @@ posInit=posInit(1:3,4);        %Extract the co-ordinates of the starting positio
 posErrFromGoal= (posGoal-posInit);   %Compute the initial error between the start and end postions of the end-effector
 errLimit=0.01;                 %Define a small arbitrary error limit
 stepSize=0.5;                  %Define a step size
-runLimit=50;
+runLimit=100;
 qRanErrDist=1;
+qTree=[qStart,0];
+posErrqNearGoal=infl
 
 for counter=1:1:runLimit
     
         posErrRandfromGoal=posErrFromGoal+qRanErrDist;
-        while norm(posErrFromGoal)<norm(posErrRandfromGoal)
+        
+        for i=1:1:runLimit
+        %while norm(posErrFromGoal)<norm(posErrRandfromGoal)
 
-            %Generate a random arm configuration
+            %Generate a random configuration
             qRand=(-pi + (2*pi)*rand(1,4));
             
-            closestQ= findNearest(
+            %Find the closest configuration in the existing tree to the
+            %random configuration
+            qCurrOnTree= findNearest(qRand,qTree);
+            qCurr=qCurrOnTree(1,1:4);
+            indexOnTree=qCurrOnTree(1,5);
             
-            
-            
+            %Generate a configuration at 'stepSize' distance from the tree 
+            %towards the random configuration
             qNear=qCurr+(stepSize*((qRand-qCurr)/norm(qRand-qCurr)));
-
-            %Check if the new random configuration collides with the obstacle
+            
+            %Check if the new configuration collides with the obstacle
             [collision] = checkCollision(rob,qCurr,qNear,sphereCenter,sphereRadius,posGoal);
-            posErrRandfromGoal=collision.EFPos-posGoal;
+            %posErrRandfromGoal=collision.EFPos-posGoal;
 
-            %If there is no collision of the new configuration and the new
-            %position is closer to the goal than the existing position
-            if (collision.colsn==0) && (norm(posErrRandfromGoal) < norm(posErrFromGoal))
-                qCurr=qNear;
-                posErrFromGoal=posErrRandfromGoal;
+            %If there is no collision of the new configuration, add it to
+            %the tree
+            if (collision.colsn==0)
+                posErrqNearGoal=collision.EFPos-posGoal;
+                
+                parentIndex=indexOnTree;
                 qNewNode=qNear;
                 break;
             end
         end
+        qTree(counter,1:4)=qNewNode;
+        qTree(counter,5)=parentIndex;
+        
+        disp(qTree);
+        %Calculate Path (TODO)
         qMilestones(counter,:)=qNewNode;
         
         %Check if EF of the last milestone is close enough to the goal
-        if norm(posErrFromGoal)<errLimit
+        if norm(posErrqNearGoal)<errLimit
             break
         end
 end
 
 end
+
+function qCurrOnTree=findNearest (qRand,qTree)
+
+smallestDist=inf;
+noOfNodes=size(qTree,1);
+
+for elemCnt=1:1:noOfNodes
+    currDistance=norm(qRand-qTree(elemCnt,1:4));
     
-function [colStruct]=checkCollision(rob,qCurr,qRand,sphereCenter,sphereRadius,posGoal)
+    if currDistance<smallestDist
+        smallestElementIndex=elemCnt;  
+        smallestDist=currDistance;
+    end
+    
+    qCurrOnTree=qTree(smallestElementIndex,:);
+end
+
+end
+
+function [colStruct]=checkCollision(rob,qCurr,qNear,sphereCenter,sphereRadius,posGoal)
 
 %Extract joint angles
-qRandEF=qRand;
-qRandL2=[qRand(1:3) 0];
-qRandL1=[qRand(1:2) 0 0];
+qRandEF=qNear;
+qRandL1=[qNear(1:3) 0];
 
 qCurrEF=qCurr;
-qCurrL2=[qCurr(1:3) 0];
-qCurrL1=[qCurr(1:2) 0 0];
+qCurrL1=[qCurr(1:3) 0];
 
-%Extract Positions
+
+%Extract Positions of the end of the two arms
 posRandEF=rob.fkine(qRandEF);posRandEF=posRandEF(1:3,4);
-posRandL2=rob.fkine(qRandL2);posRandL2=posRandL2(1:3,4);
 posRandL1=rob.fkine(qRandL1);posRandL1=posRandL1(1:3,4);
 
 posCurrEF=rob.fkine(qCurrEF);posCurrEF=posCurrEF(1:3,4);
-posCurrL2=rob.fkine(qCurrL2);posCurrL2=posCurrL2(1:3,4);
 posCurrL1=rob.fkine(qCurrL1);posCurrL1=posCurrL1(1:3,4);
 
-
-    %Check every point 0.1 units apart along the robot arm or the path
-    for pointIncrement=0:0.05:0.5
-        pointCollides=checkCollisionAtPoint(posRandEF,posRandL2,posRandL1,...
-                              posCurrEF,posCurrL2,posCurrL1,...
-                              sphereCenter,sphereRadius,pointIncrement);
-        if pointCollides==1
-            colStruct.colsn=1;
-            colStruct.EFPos=posRandEF;
-            break;
-        else
-            colStruct.colsn=0;
-        end
+%Check if the new configuration denotes a point outside the work-space [-1 1]
+for indx=1:1:3
+    if abs(posRandEF(indx)) > 1 || abs(posRandL1(indx)) > 1
+        colStruct.colsn=1;
+        colStruct.EFPos=posCurrEF;
+        return;
     end
+end
+
+%Check if the arms or EF of the new configuration collide with the obstacle 
+pointCollides=checkCollisionAtPoints(posRandEF,posRandL1,sphereCenter,sphereRadius);
+
+    if pointCollides==1
+        colStruct.colsn=1;
+    else
+        colStruct.colsn=0;
+    end
+
+colStruct.EFPos=posRandEF;
+
+end
+
+function pointCollides=checkCollisionAtPoints(posRandEF,posRandL1,sphereCenter,sphereRadius)
+
+%Check for 20 equally spaced points along the arms to check for collision
+for step=0:0.05:1
+    %Points along the robot arms itself from joint to joint
+    posPointRandBaseToL1= moveStep([0; 0; 0],posRandL1,step);
+    posPointRandL1toEF= moveStep(posRandL1,posRandEF,step);
     
-    colStruct.EFPos=posRandEF;
-end
+    %If any of the points on the path or the arm itself are inside the
+    %sphere (at <= radius distance to the centre of sphere
+    if ((norm(posRandEF - sphereCenter)<= sphereRadius) || ...
+        (norm(posPointRandBaseToL1 - sphereCenter)<= sphereRadius) || ...
+        (norm(posPointRandL1toEF - sphereCenter)<= sphereRadius))
 
-function pointCollides= checkCollisionAtPoint(posRandEF,posRandL2,posRandL1,...
-                          posCurrEF,posCurrL2,posCurrL1,...
-                          sphereCenter,sphereRadius,step)
-%Points along the robot arms itself from joint to joint
-posPointRandL1toL2= moveStep(posRandL1,posRandL2,step);
-posPointRandL2toEF= moveStep(posRandL2,posRandEF,step);
-
-%Arm end position points from current to random point along path
-posPointL2C2R= moveStep(posCurrL2,posRandL2,step);
-posPointEFC2R= moveStep(posCurrEF,posRandEF,step);
-
-%If any of the points on the path or the arm itself are inside the
-%sphere (at <= radius distance to the centre of sphere
-if ((norm(posRandEF - sphereCenter)<= sphereRadius) || ...
-   (norm(posPointRandL1toL2 - sphereCenter)<= sphereRadius) || ...
-   (norm(posPointRandL2toEF - sphereCenter)<= sphereRadius) || ...
-   (norm(posPointL2C2R - sphereCenter)<= sphereRadius) || ...
-   (norm(posPointEFC2R - sphereCenter)<= sphereRadius))
-
-    pointCollides=1;
-else
-    pointCollides=0;
-end              
-                      
-end
-                      
-
-function posNew=moveStep(posA, posB, increment)
-    for coor=1:1:3
-        if posA(coor) <= posB(coor)
-            posNew(coor) = posA(coor) + ((posB(coor)-posA(coor))*increment);
-        else
-            posNew(coor) = posB(coor) + ((posA(coor)-posB(coor))*increment);
-        end
+        pointCollides=1;
+        break;
+    else
+        pointCollides=0;
     end
-    posNew=posNew';
+end
+
+end
+                      
+
+function posNew=moveStep(posA, posB, step)
+    %Calculate increment size based on the distance of the points
+    increment=(norm(posB-posA) * step);
+    %Move a step towards PosB from PosA
+    posNew = posA + ( ((posB-posA)/norm(posB-posA)) * increment );
 end
 
