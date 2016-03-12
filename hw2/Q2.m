@@ -1,3 +1,4 @@
+% BISWARAJ KAR - CS 5335
 % Smooth path given in qMilestones
 % input: qMilestones -> nx4 vector of n milestones. 
 %        sphereCenter -> 3x1 position of center of spherical obstacle
@@ -26,110 +27,76 @@ end
 function qMilestonesSmoothed = smoothenPath(rob,rob3Link,qMilestones,sphereCenter,sphereRadius)
 
 noOfMilestones = size(qMilestones,1);
-qCurr = qMilestones(1,:);
-j=2;
+qSmMilestone = qMilestones(1,:);
+
 for milestoneNum = 1:noOfMilestones
     for nextMilestoneNum = milestoneNum+1:20
         if(nextMilestoneNum>noOfMilestones)
             break;
         end
         
-        qErr=( qMilestones(nextMilestoneNum,:)-qMilestones(milestoneNum,:) )/j;
-        qNext=qMilestones(milestoneNum,:)+qErr;
+        %Get current and next configurations
+        qCurr=qMilestones(milestoneNum,:);
+        qNext=qMilestones(nextMilestoneNum,:);
         
-        for k=1:(j-1)
-            [collision] = checkCollision(rob,rob3Link,qNext,sphereCenter,sphereRadius);
-            qNext=qNext+qErr;
-            x=0;
-            if collision.colsn==0
-                if (milestoneNum+nextMilestoneNum)==noOfMilestones
-                    qCurr = [qCurr ; qMilestones(noOfMilestones,:)];
-                    x = 1;
-                    milestoneNum=noOfMilestones;
-                    break
-                end
-            else
-                j=2;
-                qCurr =[ qCurr ; qMilestones(nextMilestoneNum-1,1:4)];
-                x=1;
-                milestoneNum=nextMilestoneNum-1;
-                break
+        %Check if the path between the current and next configuration is
+        %clear
+        collision = checkCollision(rob,rob3Link,qCurr,qNext,sphereCenter,sphereRadius);
+
+        if collision==0
+            if (milestoneNum+nextMilestoneNum)==noOfMilestones
+                qSmMilestone = [qSmMilestone ; qMilestones(noOfMilestones,:)];
+                milestoneNum=noOfMilestones;
+                break;
             end
-        end
-        if x==1
-            break
-        end
-    end
-    qMilestonesSmoothed=qCurr;
-end
-end
-    
-function [colStruct]=checkCollision(rob,rob3Link,qNear,sphereCenter,sphereRadius)
-
-%Extract joint angles
-qNearEF=qNear;
-qNearL1=qNear(1:3);
-
-%Extract Positions of the end of the two arms
-posNearEF=rob.fkine(qNearEF);posNearEF=posNearEF(1:3,4);
-posNearL1=rob3Link.fkine(qNearL1);posNearL1=posNearL1(1:3,4);
-
-%Check if the new configuration denotes a point outside the work-space [-1 1]
-for indx=1:1:3
-    if abs(posNearEF(indx)) > 1 || abs(posNearL1(indx)) > 1
-        colStruct.colsn=1;
-        colStruct.EFPos=posCurrEF;
-        return;
-    end
-end
-
-%Check if the arms or EF of the new configuration collide with the obstacle 
-pointCollides=checkCollisionAtPoints(posNearEF,posNearL1,sphereCenter,sphereRadius);
-
-    if pointCollides==1
-        colStruct.colsn=1;
-    else
-        colStruct.colsn=0;
-    end
-
-colStruct.EFPos=posNearEF;
-
-end
-
-
-function pointCollides=checkCollisionAtPoints(posNearEF,posNearL1,sphereCenter,sphereRadius)
-
-pointCollides=0;
-
-%Check for the end of the arms colliding with obstacle
-if ((norm(posNearL1 - sphereCenter) < sphereRadius) || ...
-    (norm(posNearEF - sphereCenter) < sphereRadius) || ...
-    (norm((posNearL1+posNearEF) - sphereCenter) < sphereRadius))
-    
-    pointCollides=1;
-else
-    %Check for 20 equally spaced points along the arms to check for collision
-    for step=0:0.05:1
-        %Points along the robot arms itself from joint to joint
-        posNearPointsBaseToL1= moveStep([0; 0; 0],posNearL1,step);
-        posNearPointsL1ToEF= moveStep(posNearL1,posNearEF,step);
-        posNearPointsBaseToEF= moveStep([0; 0; 0],(posNearL1+posNearEF),step);
-
-        %If any of the points on the path or the arm itself are inside the
-        %sphere (at <= radius distance to the centre of sphere
-        if ((norm(posNearPointsBaseToL1 - sphereCenter)< sphereRadius) || ...
-            (norm(posNearPointsL1ToEF - sphereCenter)< sphereRadius) || ...
-            (norm(posNearPointsBaseToEF - sphereCenter) < sphereRadius))
-
-            pointCollides=1;
-            break;
         else
-            continue;
+            %Set previous q as successful q and reject the q which collided
+            qSmMilestone =[qSmMilestone ; qMilestones(nextMilestoneNum-1,:)];
+            milestoneNum=nextMilestoneNum-1;
+            break;
         end
     end
+    qMilestonesSmoothed=qSmMilestone;
 end
 end
-   
+    
+function collision=checkCollision(rob,rob3Link,qCurr,qNext,sphereCenter,sphereRadius)
+
+collision=0;
+
+%Extract Joint Angles of the two arms for current and next q
+qCurrL1=qCurr(1:3);
+qCurrEF=qCurr;
+qNextL1=qNext(1:3);
+qNextEF=qNext;
+
+%Extract Positions of the end of the two arms for current and next q
+posCurrL1=rob3Link.fkine(qCurrL1);posCurrL1=posCurrL1(1:3,4);
+posCurrEF=rob.fkine(qCurrEF);posCurrEF=posCurrEF(1:3,4);
+posNextL1=rob3Link.fkine(qNextL1);posNextL1=posNextL1(1:3,4);
+posNextEF=rob.fkine(qNextEF);posNextEF=posNextEF(1:3,4);
+
+%Check 20 points along the path from current to next position for collision
+for step=0:0.05:1
+    
+    posNearPointsL1C2N= moveStep(posCurrL1,posNextL1,step);
+    posNearPointsEFC2N= moveStep(posCurrEF,posNextEF,step);
+    posNearPointsBase2EFC2N= moveStep((posCurrL1+posCurrEF),(posNextL1+posNextEF),step);
+    
+    %If any of the points on the path from current to next position are
+    %inside the sphere (at <= radius distance to the centre of sphere)
+    if ((norm(posNearPointsL1C2N - sphereCenter)< sphereRadius) || ...
+        (norm(posNearPointsEFC2N - sphereCenter)< sphereRadius) || ...
+        (norm(posNearPointsBase2EFC2N - sphereCenter) < sphereRadius))
+        
+        collision=1;
+        break;
+    else
+        continue;
+    end
+end
+    
+end
 
 function posNew=moveStep(posA, posB, step)
     %Calculate increment size based on the distance of the points
