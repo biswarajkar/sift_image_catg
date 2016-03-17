@@ -20,6 +20,8 @@ rob3Link = SerialLink(L1,'name','robot');
 
 %Initialize the current angles and positions
 posGoal=xGoal;
+qGoal=ikine4Joint(rob,qStart,posGoal);
+
 posInit= rob.fkine(qStart);
 posInit=posInit(1:3,4);     %Extract the co-ordinates of the starting position of end-effector
 posErrFromGoal= (posGoal-posInit);   %Compute the initial error between the start and end postions of the end-effector
@@ -33,8 +35,12 @@ posErrqNearGoal=inf;        %Set the distance of random config. from goal as inf
 
 for counter=1:1:runLimit
 
-    %Generate a random configuration
-    qRand=(-pi + 2*pi*rand(1,4));
+    %Generate a random configuration 20% of times
+    if rand < 0.2
+        qRand=qGoal;
+    else
+        qRand=(-pi + 2*pi*rand(1,4));
+    end
     
     %Find the closest configuration in the existing tree to the
     %random configuration

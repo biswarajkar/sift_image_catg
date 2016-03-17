@@ -1,0 +1,52 @@
+
+%Q1
+% 10% of times sample the goal
+if rand < 0.1
+    sample=qGoal
+else
+    sample = rand (-pi to pi)
+end
+
+
+new = sample  - nearest;
+after we find the nearest node, we check
+if (normnew)> step size
+    new = stepSize * new / norm(new)
+    
+end
+new = new + nearest;
+
+if pathcollision(rob, nearest, new, spcen, sprad)
+    con;
+end
+tree = [tree; new nearesrIdx];
+
+%reached the goal
+if sum(new == goal) ==4
+    fail=0;break;
+end
+
+T1 = rob.A(1,q) * rob.A(2,q)  %<-- this can be done instead of creating a new robot with lesser joints to calculate intermediate config.
+T2= rob.A(1,q) * rob.A(2,q) * rob.A(3,q)
+
+
+for checking collision along the path, sample Qs between the existing q and the next q generated
+
+    
+    
+%Q2:    
+newmile=milestone(end,:);
+
+i=size(milestones,1);
+while i>1
+    for j:1:i
+        qstart=qmiles(j,:);
+        qEnd=qmiles(i,:);
+        
+        if collision(rob,qstart,qend,spcen,sprad)
+            newmile=[qstart,newmile];
+            i=j;
+            break;
+        end
+    end
+end
