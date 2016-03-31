@@ -15,8 +15,8 @@ function hw3(questionNum)
     if questionNum == 1
 
         % approximately segment object from background
-        roi = [-inf,0.5,0.2,0.4,0.1,inf]; % segment sphere
-%         roi = [-inf,inf,-inf,inf,-inf,inf]; % no segmentation 
+        %roi = [-inf,0.5,0.2,0.4,0.1,inf]; % segment sphere
+        roi = [-inf,inf,-inf,inf,-inf,inf]; % no segmentation 
         indices = findPointsInROI(ptCloud,roi);
         ptCloudB = select(ptCloudOrig,indices);
         

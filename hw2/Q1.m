@@ -228,5 +228,6 @@ while norm(posError)>errLimit
     qCurr = qCurr + (stepSize*qDelta)';                  %Calculate the target join angles in the ith iteration
 end
    q=qCurr;
+   % BISWARAJ KAR - CS 5335
 end
 
