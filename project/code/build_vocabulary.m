@@ -4,7 +4,8 @@
 %This function will sample SIFT descriptors from the training images,
 %cluster them with kmeans, and then return the cluster centers.
 
-function vocabulary = build_vocabulary( image_paths, vocab_size )
+%function vocabulary = build_vocabulary( image_paths, vocab_size )
+function vocabulary = build_vocabulary()
 % The inputs are images, 
 %           a N x 1 cell array of image paths and 
 %           the size of the vocabulary
@@ -28,6 +29,19 @@ Functions used:
   Matlab has a build in kmeans function, but it is slower.
 %}
 
+%%
+%Testiing Only
+% Set the main data path
+run('vlfeat-0.9.20/toolbox/vl_setup')
+data_path = '../data/';
+categories = {'Kitchen', 'Store', 'Bedroom', 'LivingRoom', 'Office', ...
+       'Industrial', 'Suburb', 'InsideCity', 'TallBuilding', 'Street', ...
+       'Highway', 'OpenCountry', 'Coast', 'Mountain', 'Forest'};
+num_train_per_cat = 100; 
+[image_paths, test_image_paths, train_labels, test_labels] = get_image_paths(data_path, categories, num_train_per_cat);
+vocab_size=500;
+%%
+
 No_of_images = size(image_paths, 1);
 N_each = ceil(10000/No_of_images);
 descriptors = zeros(128, No_of_images * N_each);
@@ -36,9 +50,12 @@ for counter=1:No_of_images
     % Load images from the training set
     img = im2single(imread(image_paths{counter}));
     % Get features for each image
+    %'Fast':use a piecewise-flat, rather than Gaussian, windowing function.
+    %'Step':extracts a SIFT descriptor each STEP, i.e. the width in pixels 
+    %       of a spatial bin
     [~, features] = vl_dsift(img, 'Fast', 'Step', 10);
     % Sample the descriptors from each image
-    descriptors(:,N_each * (counter-1) + 1 : N_each * counter) = features(:,1:N_each);
+    descriptors(:, N_each * (counter-1) + 1 : N_each * counter) = features(:,1:N_each);
 end
     
 [centers, ~] = vl_kmeans(descriptors, vocab_size);

@@ -55,8 +55,8 @@ I2=eye(4,2);
 Bbar=[B;I2];
 
 QTbar=[QT zeros(4,4); zeros(4,4) zeros(4,4)];
-Qbar=[Q zeros(4,4);zeros(2,4) R zeros(2,2); zeros(1,8);zeros(1,8)];
-x0bar=[x0;[0;0]];
+Qbar=[Q zeros(4,4);zeros(2,4) R 0 0; zeros(8)l];
+x0bar=x0;
 
 end
 

@@ -46,7 +46,13 @@ end
 %        i -> current time step of controller
 % output: u -> control action to take
 function u = getControl(A,B,R,Pseq,x,i)
-
+    if i==100 
+        pEnd=Pseq{100,:};
+        u= -inv(R + B'*pEnd*B)*B'*pEnd*A*x;
+    else
+        pNext=Pseq{i+1,:};
+        u= -inv(R + B'*pNext*B)*B'*pNext*A*x;
+    end
 end
 
 % Calculate time-varying value function using riccati eqn. (i.e.
@@ -54,8 +60,15 @@ end
 % input: A,B,Qf,Q,R -> parameters of dynamics and cost function
 %        T -> time horizon
 % output: Pseq -> cell array of 4x4 P matrices. Cell array goes from 1 to T
-function Pseq = FH_DT_Riccati(A,B,Qf,Q,R,T)
+function Pseq = FH_DT_Riccati(A,B,Qt,Q,R,T)
+p=cell(T,1);
+p{T,:}=Qt;
+for counter=T-1:-1:1
+    pNext=p{counter+1};
+    p{counter,:}= Q + A'*pNext*A - A'*pNext*B*inv(R+B'*pNext*B)*B'*pNext*A;
+end
 
+Pseq=p;
 end
 
 

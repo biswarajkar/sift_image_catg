@@ -135,9 +135,12 @@ qCurrEF=qCurr;
 qCurrL1=qCurr(1:3);
 
 %Extract Positions of the end of the two arms
-posNearEF=rob.fkine(qNearEF);posNearEF=posNearEF(1:3,4);
-posNearL1=rob3Link.fkine(qNearL1);posNearL1=posNearL1(1:3,4);
-posCurrEF=rob.fkine(qCurrEF);posCurrEF=posCurrEF(1:3,4);
+posNearEF=rob.fkine(qNearEF);
+posNearEF=posNearEF(1:3,4);
+posNearL1=rob3Link.fkine(qNearL1);
+posNearL1=posNearL1(1:3,4);
+posCurrEF=rob.fkine(qCurrEF)
+;posCurrEF=posCurrEF(1:3,4);
 %posCurrL1=rob3Link.fkine(qCurrL1);posCurrL1=posCurrL1(1:3,4);
 
 %Check if the new configuration denotes a point outside the work-space [-1 1]

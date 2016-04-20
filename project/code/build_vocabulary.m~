@@ -28,13 +28,19 @@ Functions used:
   Matlab has a build in kmeans function, but it is slower.
 %}
 
-N_images = size(image_paths, 1);
-N_each = ceil(10000/N_images);
-descriptors = zeros(128, N_images * N_each);
-for ii=1:N_images
-    img = im2single(imread(image_paths{ii}));
+No_of_images = size(image_paths, 1);
+N_each = ceil(10000/No_of_images);
+descriptors = zeros(128, No_of_images * N_each);
+
+for counter=1:No_of_images
+    % Load images from the training set
+    img = im2single(imread(image_paths{counter}));
+    % Get features for each image
+    %'Fast':use a piecewise-flat, rather than Gaussian, windowing function.
+    %'Step':extracts a SIFT descriptor each STEP width in pixels of a spatial bin
     [~, features] = vl_dsift(img, 'Fast', 'Step', 10);
-    descriptors(:,N_each * (ii-1) + 1 : N_each * ii) = features(:,1:N_each);
+    % Sample the descriptors from each image
+    descriptors(:,N_each * (counter-1) + 1 : N_each * counter) = features(:,1:N_each);
 end
     
 [centers, ~] = vl_kmeans(descriptors, vocab_size);
