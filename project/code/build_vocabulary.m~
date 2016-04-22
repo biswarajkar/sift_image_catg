@@ -8,57 +8,64 @@ function vocabulary = build_vocabulary( image_paths, vocab_size )
 % The inputs are images, 
 %           a N x 1 cell array of image paths and 
 %           the size of the vocabulary
-% The output 'vocabulary' should be vocab_size x 128. Each row is a cluster
+% The output 'vocabulary' is vocab_size x 128. Each row is a cluster
 % centroid / visual word.
-%{
-Functions used:
-[locations, SIFT_features] = vl_dsift(img) 
- http://www.vlfeat.org/matlab/vl_dsift.html
- locations is a 2 x n list list of locations, which can be thrown away here
- SIFT_features is a 128 x N matrix of SIFT features
 
+%Total Number of images to process
+No_of_images = size(image_paths, 1);
+
+%Number of key-points to consider for each image
+No_of_sample_descriptors = 8;
+
+%Store all descriptors in a matrix of size 128 x [1500 x 8]
+descriptors = zeros(128, No_of_images * No_of_sample_descriptors);
+
+%% Get SIFT features/descriptors for each image
+fprintf('   -> Get SIFT descriptors for all images.\n');
+for counter=1:No_of_images
+    % Load each image from the training set
+    img = im2single(imread(image_paths{counter}));
+    % Get features for each image
+    %{
+      [locations, SIFT_features] = vl_dsift(img)
+      http://www.vlfeat.org/matlab/vl_dsift.html
+      'Step',10 -> Extracts a SIFT descriptor each 10 pixels.
+      locations is a 2 x n list list of locations, which can be ignored.
+      SIFT_features is a 128 x N matrix of SIFT features which we are interested
+    %}
+    [~, features] = vl_dsift(img, 'Fast', 'Step', 10);
+    % We will randomly sample the descriptors from each image instead of taking
+    % all descriptors to save memory and speed up the clustering.
+    % So, we take the any of the 8 descriptors per image at random using the 
+    % randi function to generate 8 random integers from the uniform distribution 
+    % between 1 and size(features,2).
+    descriptors(:, No_of_sample_descriptors * (counter-1) + 1 : No_of_sample_descriptors * counter) ...
+        = features(:,randi([1 size(features,2)],1,No_of_sample_descriptors));
+        %= features(:,1:No_of_sample_descriptors);
+end
+
+%% K-Means Clustering/Quantization
+%{
+Now that we have tens of thousands of SIFT features from many training
+images, we will need to cluster them with kmeans/LLOYD algorithm. The 
+resulting centroids are now our visual word vocabulary.
+Matlab has a build in kmeans function, but it is slower, so I use vl_kmeans
 [centers, assignments] = vl_kmeans(X, K)
  http://www.vlfeat.org/matlab/vl_kmeans.html
   X is a d x M matrix of sampled SIFT features, where M is the number of
-   features sampled. M should be pretty large!
+   features sampled.
   K is the number of clusters desired (vocab_size)
-  centers is a d x K matrix of cluster centroids. This is the vocabulary.
-  We disregard 'assignments'.
-
-  Matlab has a build in kmeans function, but it is slower.
+  Initialization is the initial data-point selection, we set it to random 
+   data points (RANDSEL).
+  centers is a d x K matrix of cluster centroids. This is the vocabulary we
+   need to store.
+  assignments is a row vector specifying the assignments of the data X to the
+   K centers. We ignore this.
 %}
 
-No_of_images = size(image_paths, 1);
-N_each = ceil(10000/No_of_images);
-descriptors = zeros(128, No_of_images * N_each);
-
-for counter=1:No_of_images
-    % Load images from the training set
-    img = im2single(imread(image_paths{counter}));
-    % Get features for each image
-    %'Fast':use a piecewise-flat, rather than Gaussian, windowing function.
-    %'Step':extracts a SIFT descriptor each STEP width in pixels of a spatial bin
-    [~, features] = vl_dsift(img, 'Fast', 'Step', 10);
-    % Sample the descriptors from each image
-    descriptors(:,N_each * (counter-1) + 1 : N_each * counter) = features(:,1:N_each);
-end
-    
-[centers, ~] = vl_kmeans(descriptors, vocab_size);
-vocab = single(centers');
-
-% Load images from the training set. To save computation time, you don't
-% necessarily need to sample from all images, although it would be better
-% to do so. You can randomly sample the descriptors from each image to save
-% memory and speed up the clustering. Or you can simply call vl_dsift with
-% a large step size here, but a smaller step size in make_hist.m. 
-
-% For each loaded image, get some SIFT features. You don't have to get as
-% many SIFT features as you will in get_bags_of_sift.m, because you're only
-% trying to get a representative sample here.
-
-% Once you have tens of thousands of SIFT features from many training
-% images, cluster them with kmeans. The resulting centroids are now your
-% visual word vocabulary.
+fprintf('   -> Run K-Means Clustering of all descriptors.\n');
+[centers, ~] = vl_kmeans(descriptors,vocab_size,'Initialization','RANDSEL');
+vocabulary = single(centers');
 
 
 
