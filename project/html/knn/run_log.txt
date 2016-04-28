@@ -1,0 +1,56 @@
+>> project
+----------------------------------------------------------
+Scene Recognition with Bag of Words: CS 5335: Biswaraj Kar
+----------------------------------------------------------
+Runtime: Apr 27, 2016 22:11:44
+
+Number of training examples per category: 100
+Vocabulary Size: 400
+
+Step 0: Getting paths and labels for all training and test data
+---------------------------------------------------------------
+
+Step 1: Build Visual Word Vocabulary:
+-------------------------------------
+ - Visual word vocabulary not found. Creating a new vocabulary from training images.
+   Number of key-points to consider for each image: 9
+   Step Size: 10
+
+   -> Get SIFT descriptors for all images
+   -> Run K-Means Clustering on all descriptors
+Step 1 Elapsed time is 43.663594 seconds.
+
+Step 2: Get Bag-Of-SIFTs of Images:
+-----------------------------------
+   -> Running on images in Training Set
+      Step Size: 5
+
+      ..Processed 300 Images
+      ..Processed 600 Images
+      ..Processed 900 Images
+      ..Processed 1200 Images
+      ..Processed 1500 Images
+   -> Running on images in Test Set
+      Step Size: 5
+
+      ..Processed 300 Images
+      ..Processed 600 Images
+      ..Processed 900 Images
+      ..Processed 1200 Images
+      ..Processed 1500 Images
+Step 2 Elapsed time is 812.027543 seconds.
+
+Step 3: Classify each test image by training and using a classifier:
+--------------------------------------------------------------------
+   -> Classify Using Nearest Neighbor Classifier
+      No. of Nearest Neighbors: 9
+
+Step 3 Elapsed time is 5.787089 seconds.
+
+Step 4:  Build a confusion matrix and evaluate the classification techniques:
+-----------------------------------------------------------------------------
+Creating results_webpage/index.html, thumbnails, and confusion matrix
+Accuracy (mean of diagonal of confusion matrix) is 0.5333
+Step 4 Elapsed time is 3.540303 seconds.
+
+Total program Elapsed time is 867.549730 seconds.

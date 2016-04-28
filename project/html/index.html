@@ -1,0 +1,206 @@
+<html>
+<head>
+<title>CS 5335 Project: Biswaraj Kar</title>
+<link href='http://fonts.googleapis.com/css?family=Nunito:300|Crimson+Text|Droid+Sans+Mono' rel='stylesheet' type='text/css'>
+<link rel="stylesheet" title="Default" href="styles/github.css">
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js"></script>  
+
+<link rel="stylesheet" href="highlighting/styles/default.css">
+<script src="highlighting/highlight.pack.js"></script>
+
+<style type="text/css">
+body {
+	margin: 0px;
+	width: 100%;
+	font-family: 'Crimson Text', serif;
+	font-size: 20px;
+	background: #fcfcfc;
+}
+h1 {
+	font-family: 'Nunito', sans-serif;
+	font-weight: normal;
+	font-size: 28px;
+	margin: 25px 0px 0px 0px;
+	text-transform: lowercase;
+
+}
+
+h2 {
+	font-family: 'Nunito', sans-serif;
+	font-weight: normal;
+	font-size: 32px;
+	margin: 15px 0px 35px 0px;
+	color: #333;	
+	word-spacing: 3px;
+}
+
+h3 {
+	font-family: 'Nunito', sans-serif;
+	font-weight: normal;
+	font-size: 26px;
+	margin: 10px 0px 10px 0px;
+	color: #333;
+	word-spacing: 2px;
+}
+h4 {
+	font-family: 'Nunito', sans-serif;
+	font-weight: normal;
+	font-size: 22px;
+	margin: 10px 0px 10px 0px;
+	color: #333;
+	word-spacing: 2px;
+}
+
+h5 {
+	font-family: 'Nunito', sans-serif;
+	font-weight: normal;
+	font-size: 18px;
+	margin: 10px 0px 10px 0px;
+	color: #111;
+	word-spacing: 2px;
+}
+
+p, li {
+	color: #444;
+}
+
+a {
+	color: #DE3737;
+}
+
+.container {
+	margin: 0px auto 0px auto;
+	width: 1160px;
+}
+
+#header {
+	background: #333;
+	width: 100%;
+}
+
+#headersub {
+	color: #ccc;
+	width: 960px;
+	margin: 0px auto 0px auto;
+	padding: 20px 0px 20px 0px;
+}
+
+.chart {
+	width: 480px;
+}
+.lol {
+	font-size: 16px;
+	color: #888;
+	font-style: italic;
+}
+.sep {
+	height: 1px;
+	width: 100%;
+	background: #999;
+	margin: 20px 0px 20px 0px;
+}
+.footer{
+	font-size: 16px;
+}
+.latex {
+	width: 100%;
+}
+
+.latex img {
+	display: block;
+	margin: 0px auto 0px auto;
+}
+
+pre {
+	font-family: 'Droid Sans Mono';
+	font-size: 14px;
+}
+
+table td {
+  text-align: center;
+  vertical-align: middle;
+}
+
+table td img {
+  text-align: center;
+  vertical-align: middle;
+}
+
+#contents a {
+}
+</style>
+<script type="text/javascript">
+    hljs.initHighlightingOnLoad();
+</script>
+</head>
+<body>
+<div id="header" >
+<div id="headersub">
+<h1> BISWARAJ KAR <span style="color: #DE3737"> biswarajkar@ccs.neu.edu </span></h1>
+</div>
+</div>
+<div class="container">
+
+<h2>CS 5335 : Robotic Science & Systems - Scene Recognition with Bag of Words</h2>
+
+<h3>Goal</h3>
+<p>The goal of this project is to classify images based on the objects contained in the image or the global scene depicted by the image. To accomplish scene detection on a large variety of images (1500 grayscale images, ~300x300), the project evaluates the task of scene recognition with a relatively new technique, the bags of quantized local features and linear classifiers learned by nearest neighbor classifier and support vector machines.</p>
+    
+<p>This can be done in two broad steps:</p>
+<ol>
+<li>Feature computation and Clustering: How to get important feaures from an image and cluster them into groups.</li>
+<ul>
+            <li>We find the SIFT descriptors of 16x16 patches computed over a grid of equal spacing. The result is a 128 dimenstional vector containing the descriptors of the image.
+            <li>We then quantize or cluster the descriptors into a certain discrete groups (of <strong>vocab_size</strong> types) by K-means clustering, and count the frequency of of each of those types appearing in the image.</li>
+</ul>
+<li>Scene classification: Given the set of training features and training labels, how to classify scenes into group of words which might represent a disticnt feature in the image.
+<ul>
+    <li>I experimented with Nearest Neighbor classification, which finds the training images that are nearest to a given test image, and return the scene label that is dominant among them</li>
+    <li>To further increase the accuracy, I implemented the Support Vector Machine classifier which tries to find the line separating images in a category from images not in that category</li>
+</ul>
+</ol>
+
+<h3>Results</h3>
+(Click on image to see more details)
+<ol>
+<li>Bag of SIFT + Nearest Neighbor Classifier
+    <p>
+        <a href="knn/index.html"><img src="knn/confusion_matrix.png"></a>
+    </p>
+    <p>
+        Accuracy (mean of diagonal of confusion matrix) is
+        <iframe src="knn/accuracy.txt" frameborder="0" height="20" width="70" seamless="seamless" scrolling="no"></iframe>
+    </p>
+</li>
+<li>Bag of SIFT + linear SVM Classifier
+    <p>
+        <a href="svm/index.html"><img src="svm/confusion_matrix.png"></a>
+    </p>
+    <p>
+        Accuracy (mean of diagonal of confusion matrix) is 
+        <iframe src="svm/accuracy.txt" frameborder="0" height="20" width="70" seamless="seamless" scrolling="no"></iframe>
+    </p>
+</li>
+</ol>
+
+<h3>Effect of vocabulary size</h3>
+<p>One of the free parameter in the Bag of SIFT model is the size of the vocabulary, or the number of clusters that we'll store. Reducing the vocabulary size means that we're compressing the feature vectors by reducing their dimension, increasing the vocabulary size makes the visual words more fine-grained. Investigation of how the performance varies with different vocabulary sizes, the following rough correlation emerges as shown in the graph below:</p>
+
+<div>
+    <img src="vocab_sizes.png" />
+</div>
+<p>We can see that the performance vastly improves with vocabulary size going from 20 to 200 but improves more slowly for larger vocabuary sizes. This is because as more clusters are introduced, the chance for noise and the number of dimension in the feature vector also increases.</p>
+    
+<h3>Effect of value of K in Nearest Neighbour Classifier</h3>
+<p>An important free parameter in the Nearest Neighbour Classifier is the number of nearest neighbours ("K") considered for finding the best match. Upon investigating, I found that K=9 is the best paramater for the given set of 1500 images.</p>
+
+<p>We can see that the performance vastly improves with the value of K varing from 1 to 9 but does not improve for larger values of K for the given set of images (~ 300x300). This is because as more neighbors are introduced, the chance for noise in the neighbouring pixels increases and the blob size also increases.</p>
+    
+    
+<h3>Effect of value LAMBDA in SVM Classifier</h3>
+<p>A free parameter of the SVM Classifier is the value of LAMBDA which regularizes the linear classifier
+  by encouraging W to be of small magnitude. Upon experimenting with a wide range of values for
+  LAMBDA, e.g. 0.00001, 0.0001, 0.001, 0.01, 0.1, 1, 10; I found that LAMBDA=0.00001 gave the best accuracy for the given set of images.
+
+</body>
+</html>
