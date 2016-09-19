@@ -38,7 +38,7 @@ for catNum = 1:num_of_categories
     labels (-1 or 1), and LAMBDA which regularizes the linear classifier
     by encouraging W to be of small magnitude.
     %}
-    [W B] = vl_svmtrain(training_image_features', matching_indices, LAMBDA);
+    [W, B] = vl_svmtrain(training_image_features', matching_indices, LAMBDA);
     
     %Confidence, or distance from the margin, is W*X + B where '*' is the
     %inner product or dot product and W and B are the learned hyperplane parameters.
